@@ -156,14 +156,17 @@ a {
   }
 }
 
-.dispute_link {
+.dispute_link,
+.tracking_link {
   color: blue;
   text-decoration: none;
 }
 
-.dispute_link:hover {
+.dispute_link:hover,
+.tracking_link:hover {
   text-decoration: underline;
 }
+
 
 .lb-won {
   width: auto;
@@ -185,7 +188,7 @@ a {
   font-weight: bold;
 }
 
-.lb-dispute{
+.lb-dispute {
   width: 50px;
   background-color: orange;
   padding: 5px;

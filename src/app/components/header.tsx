@@ -1,11 +1,12 @@
 'use client'
 import { auth } from "@/auth";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import React from "react";
-import { Navbar, Container, Nav, Image } from "react-bootstrap";
+import { Navbar, Container, Nav, Image, Dropdown, NavDropdown } from "react-bootstrap";
 
 const Header = () => {
+    const { data: session, status } = useSession();
     return (
         <Navbar bg="dark" data-bs-theme="dark">
             <Container>
@@ -16,9 +17,16 @@ const Header = () => {
                     {/* <Link href="/transaction" className="nav-link">Transactions</Link> */}
                 </Nav>
                 <Navbar.Collapse className="justify-content-end">
-                    <Navbar.Text>
-                        Hello
-                    </Navbar.Text>
+                    <Nav>
+                        <NavDropdown
+                            id="nav-dropdown-dark-example"
+                            title={session?.user?.name}
+                            menuVariant="dark"
+                            drop="down-centered"
+                        >
+                            <NavDropdown.Item onClick={() => signOut()}>Sign Out</NavDropdown.Item>
+                        </NavDropdown>
+                    </Nav>
                 </Navbar.Collapse>
             </Container>
         </Navbar>

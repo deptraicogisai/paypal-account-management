@@ -1,17 +1,18 @@
 "use client";
 import { Button, Col, Container, Form, InputGroup, Row, Spinner, Table, Image, Dropdown } from "react-bootstrap";
-import PaypalAccountModal from "../modals/paypal-account-modal";
+import PaypalAccountModal from "../../modals/paypal-account-modal";
 import { useEffect, useState } from "react";
-import { PaypalAccount, PaypalResult } from "../models/account";
-import spHelper from "../lib/supabase/supabaseHelper";
-import Paging from "../components/paging";
-import ComfirmModal from "../modals/confirm";
+import { PaypalAccount, PaypalResult } from "../../models/account";
+import spHelper from "../../lib/supabase/supabaseHelper";
+import Paging from "../../components/paging";
+import ComfirmModal from "../../modals/confirm";
 import { MdOutlineEmail } from "react-icons/md";
 import { AiOutlineGlobal } from "react-icons/ai";
 import { CiBank } from "react-icons/ci";
-import DisputeModal from "../modals/dispute-modal";
+import DisputeModal from "../../modals/dispute-modal";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 export default function Account() {
     const [show, setShow] = useState(false);
     const [data, setData] = useState<PaypalResult>();
@@ -24,14 +25,9 @@ export default function Account() {
         domain: "",
         bank: ""
     });
-    const [showDisputeModal, setShowDisputeModal] = useState(false);
-    const { data: session, status } = useSession();
 
-    if (!session) {
-        redirect("/login");
-    } else {
-        redirect("/account");
-    }
+    const [showDisputeModal, setShowDisputeModal] = useState(false);
+
     useEffect(() => {
         fetchData();
     }, [currentPage]);
@@ -86,7 +82,6 @@ export default function Account() {
     }
 
     const handleAccountAdded = (account: any) => {
-        debugger;
         setAccount(account)
         fetchData();
     }
@@ -289,18 +284,13 @@ export default function Account() {
                                             <td className="text-center">
                                                 <Button className="mx-3" variant="outline-primary" onClick={() => viewAccount(item)}>View</Button>
                                                 <Button variant="outline-danger" onClick={() => confirmRemove(item)}>Remove</Button>
-                                                <div className="mt-3">
-                                                    {
-                                                        item.dispute?.items.length > 0 ? (
-                                                            <Image
-                                                                src="/image/dispute.png"
-                                                                rounded
-                                                                width={30}
-                                                                onClick={() => window.open(`/dispute/${item.id}`, '_blank')}
-                                                                style={{ cursor: 'pointer' }}
-                                                            />
-                                                        ) : (<></>)
-                                                    }
+                                                <div className="mt-2">
+                                                    <Button
+                                                        variant="outline-success"
+                                                        onClick={() => window.open(`/transaction/${item.id}`, '_blank')}
+                                                    >
+                                                        View List Transactions
+                                                    </Button>
                                                 </div>
                                             </td>
                                         </tr>

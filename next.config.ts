@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true, // 👈 Bỏ qua lỗi TypeScript khi build
   },
+  devIndicators: false,
   async redirects() {
     return [
       {

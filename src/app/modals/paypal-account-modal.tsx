@@ -38,7 +38,6 @@ const PaypalAccountModal = (props: IProps) => {
     });
 
     useEffect(() => {
-        debugger;
         if (props.account) setFormData(props.account);
         else setFormData({
             id: 0,

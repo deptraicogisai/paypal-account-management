@@ -1,5 +1,5 @@
-class PaypalHelper {    
-    public convertToUTC(time: string) {
+class PaypalHelper {
+    public convertToUTC(time: string, firstSecond: boolean) {
         const convertDate = new Date(time);
         const mm = String(convertDate.getMonth() + 1).padStart(2, '0'); // Months are 0-based
         const dd = String(convertDate.getDate()).padStart(2, '0');
@@ -11,10 +11,12 @@ class PaypalHelper {
         const [month, day, year] = formatted.split("/");
 
         // Create Date object with 00:00:00 local time
-        const localDate = new Date(`${year}-${month}-${day}T00:00:01Z`);
+        const timeString = firstSecond
+            ? `${year}-${month}-${day}T00:00:00Z`
+            : `${year}-${month}-${day}T23:59:59Z`;
+        const localDate = new Date(timeString);
         // Convert to UTC ISO string
         const utcString = localDate.toISOString();
-        console.log(utcString);
         return utcString;
     }
 
@@ -34,9 +36,16 @@ class PaypalHelper {
         const mi = pad(utcDate.getMinutes());
         const ss = pad(utcDate.getSeconds());
 
-        const formattedVN = `${mm}/${dd}/${yyyy} ${hh}:${mi}:${ss}`;
+        const formattedVN = `${dd}/${mm}/${yyyy} ${hh}:${mi}:${ss}`;
         return formattedVN;
     }
+
+    public parseVNDateTime(input: string): Date {
+        // Format: dd/mm/yyyy hh:mm:ss
+        const [datePart, timePart] = input.split(' ');
+        const [day, month, year] = datePart.split('/');
+        return new Date(`${year}-${month}-${day}T${timePart}Z`);
+      }
 
     public getDisputeReasonStatusDescription(code: string) {
         const disputeReasonStatusMap: Record<string, string> = {

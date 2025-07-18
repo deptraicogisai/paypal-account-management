@@ -74,11 +74,14 @@ class SupabaseHelper {
 
     public async upsertAccount(account: PaypalAccount) {
         try {
+            debugger;
             // Exclude 'id' from the account object before inserting
             const { id, ...accountWithoutId } = account;
+            // Exclude 'balances' and 'disputes' fields before upsert
+            const { balances, disputes, ...accountData } = account.id === 0 ? accountWithoutId : account;
             const { error } = await supabase
                 .from('account')
-                .upsert([account.id === 0 ? accountWithoutId : account])
+                .upsert([accountData])
 
             if (error) {
                 return {
@@ -120,6 +123,37 @@ class SupabaseHelper {
         } catch (error: any) {
             return {
                 success: false,
+                message: error?.message || error
+            };
+        }
+    }
+
+    public async getUser(user: any) {
+        debugger;
+        try {
+            const { data, error } = await supabase
+                .from('user')
+                .select('*')
+                .eq('email', user.email)
+                .single();
+
+            if (error || !data) {
+                const { error: insertError } = await supabase
+                    .from('user').insert({
+                        email: user.email
+                    });
+
+                return {
+                    permission: false
+                };
+            }
+
+            return {
+                permission: data.permission
+            };
+        } catch (error: any) {
+            return {
+                error: true,
                 message: error?.message || error
             };
         }

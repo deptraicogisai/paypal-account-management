@@ -3,7 +3,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
-import { Button } from "react-bootstrap";
+import { Button, Image } from "react-bootstrap";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -16,7 +16,7 @@ export default function LoginPage() {
         setLoading(true);
         setError(null);
         try {
-            await signIn("google", { redirectTo: "/account" })
+            await signIn("google")
         } catch (err: any) {
             debugger;
             setError("Google sign in failed.");
@@ -26,14 +26,16 @@ export default function LoginPage() {
 
     return (
         <div style={{
-            maxWidth: 400,
+            maxWidth: 300,
             margin: "60px auto",
             padding: 32,
             border: "1px solid #ddd",
             borderRadius: 8,
             background: "#fff"
         }}>
-            <h2 style={{ textAlign: "center", marginBottom: 24 }}>Login</h2>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+                <Image src='/image/paypal.png' />
+            </div>
             <Button
                 onClick={handleGoogleSignIn}
                 disabled={loading}
@@ -41,14 +43,16 @@ export default function LoginPage() {
                     width: "100%",
                     padding: 10,
                     borderRadius: 4,
-                    border: "1px solid #ccc",
+                    border: "1px solid #ccc",                    
                     background: "#fff",
                     color: "#333",
-                    fontWeight: 600,
-                    cursor: loading ? "not-allowed" : "pointer"
+                    fontSize: "17px",
+                    fontWeight: 'bold',
+                    justifyContent: 'center',
+                    cursor: "pointer"
                 }}
             >
-                <FcGoogle /> Sign in with Google
+                <FcGoogle className="mx-2" /> Sign in with Google
             </Button>
         </div>
     );
