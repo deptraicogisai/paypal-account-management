@@ -34,7 +34,9 @@ const PaypalAccountModal = (props: IProps) => {
         country: props.account?.country || "",
         bank: props.account?.bank || "",
         client_id: props.account?.client_id || "",
-        client_secret: props.account?.client_secret || ""
+        client_secret: props.account?.client_secret || "",
+        sandbox_client_id: props.account?.sandbox_client_id || "",
+        sandbox_client_secret: props.account?.sandbox_client_secret || ""
     });
 
     useEffect(() => {
@@ -53,7 +55,9 @@ const PaypalAccountModal = (props: IProps) => {
             country: "",
             bank: "",
             client_id: "",
-            client_secret: ""
+            client_secret: "",
+            sandbox_client_id: "",
+            sandbox_client_secret: ""
         });
     }, [props.account]);
 
@@ -248,6 +252,31 @@ const PaypalAccountModal = (props: IProps) => {
                                     placeholder="Enter Client Secret"
                                     onChange={handleChange}
                                     value={formData.client_secret}
+                                />
+                            </Form.Group>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Sandbox Client Id</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="sandbox_client_id"
+                                    placeholder="Enter Sandbox Client Id"
+                                    onChange={handleChange}
+                                    value={formData.sandbox_client_id}
+                                />
+                            </Form.Group></Col>
+                        <Col>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Sandbox Client Secret</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="sandbox_client_secret"
+                                    placeholder="Enter Sandbox Client Secret"
+                                    onChange={handleChange}
+                                    value={formData.sandbox_client_secret}
                                 />
                             </Form.Group>
                         </Col>

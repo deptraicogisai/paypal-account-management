@@ -25,7 +25,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       else {
         throw new Error("NoPermission");
       }
-      return true;
     },
     async redirect({ url, baseUrl }) {
       return "/account"; // always redirect to account after login

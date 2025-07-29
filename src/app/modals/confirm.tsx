@@ -10,7 +10,7 @@ interface ConfirmProps {
 
 const ComfirmModal = (props: ConfirmProps) => {
     return (
-        <Modal className="theme-dark" show={props.show} centered>
+        <Modal className="theme-dark" show={props.show}>
             <Modal.Header closeButton onHide={props.onHide}>
                 <Modal.Title>Confirmation</Modal.Title>
             </Modal.Header>

@@ -7,7 +7,7 @@ import spHelper from "@/app/lib/supabase/supabaseHelper";
 import { PaypalAccount } from "@/app/models/account";
 import { env } from "process";
 import { use, useEffect, useState } from "react";
-import { Button, Col, Container, Dropdown, Form, InputGroup, Row, Spinner, Table } from "react-bootstrap";
+import { Badge, Button, Col, Container, Dropdown, Form, InputGroup, Row, Spinner, Table } from "react-bootstrap";
 import { CiSettings } from "react-icons/ci";
 
 const DisputePage = ({ params }: { params: Promise<{ id: number }> }) => {
@@ -23,11 +23,19 @@ const DisputePage = ({ params }: { params: Promise<{ id: number }> }) => {
     const [dataPaging, setDataPaging] = useState<DisputeData>();
     const [filterData, setFilerData] = useState<DisputeData>();
     const [totalResul, setTotalResult] = useState(0);
+    const isSandbox = Number(process.env.NEXT_PUBLIC_SANDBOX);
+
     const fetchDispute = async () => {
         try {
             var accountDetail = await spHelper.getAccount(id);
             setAccount(accountDetail);
-            api.setCredential(accountDetail.data?.client_id, accountDetail.data?.client_secret);
+            if (isSandbox == 0) {
+                api.setCredential(accountDetail.data?.client_id, accountDetail.data?.client_secret);
+            }
+            else {
+                api.setCredential(accountDetail.data?.sandbox_client_id, accountDetail.data?.sandbox_client_secret);
+            }
+
             var data = await dispute.getListDisputes();
             // Split data items with paging
             const pageSize = Number(process.env.NEXT_PUBLIC_PAGE_SIZE) || 10;
@@ -178,16 +186,16 @@ const DisputePage = ({ params }: { params: Promise<{ id: number }> }) => {
                                 <th>Amount</th>
                                 <th>Last updated</th>
                                 <th>Due date</th>
-                                <th className="text-center">
+                                {/* <th className="text-center">
                                     <CiSettings />
-                                </th>
+                                </th> */}
                             </tr>
                         </thead>
                         <tbody>
                             {
                                 ((dataPaging?.length ?? 0) > 0) ? (dataPaging?.map((item: any) => {
                                     return (
-                                        <tr key={item.dispute_id}>
+                                        <tr key={item.dispute_id} >
                                             <td>
                                                 <a
                                                     href={`/dispute/${id}/case_details/${item.dispute_id}`}
@@ -196,13 +204,16 @@ const DisputePage = ({ params }: { params: Promise<{ id: number }> }) => {
                                                 >
                                                     {item.dispute_id}
                                                 </a>
+                                                {
+                                                    item?.seller_response_due_date && ppHelper.hightlightDueDate(ppHelper.convertToVNTime(item?.seller_response_due_date)) && <Badge bg="danger" className="mx-2" pill><b>Response</b></Badge>
+                                                }
                                             </td>
                                             <td>{ppHelper.getDisputeReasonStatusDescription(item.reason)}</td>
                                             <td>{item.status == 'RESOLVED' ? (<span className={`lb-${item.outcome.toLowerCase()}`}>{item.outcome}</span>) : ppHelper.getDisputeReasonStatusDescription(item.status)}</td>
                                             <td>{item.dispute_amount.value} {item.dispute_amount.currency_code}</td>
                                             <td>{ppHelper.convertToVNTime(item.update_time)}</td>
-                                            <td>{ppHelper.convertToVNTime(item.seller_response_due_date)}</td>
-                                            <td className="text-center">
+                                            <td>{ppHelper.convertToVNTime(item?.seller_response_due_date ? item?.seller_response_due_date : item?.buyer_response_due_date)}</td>
+                                            {/* <td className="text-center">
                                                 <Dropdown>
                                                     <Dropdown.Toggle variant="outline-primary" id="dropdown-basic" size="sm">
                                                         Action
@@ -216,7 +227,7 @@ const DisputePage = ({ params }: { params: Promise<{ id: number }> }) => {
                                                         <Dropdown.Item href={`/dispute/${id}/case_details/${item.dispute_id}`} target="_blank">Case Details</Dropdown.Item>
                                                     </Dropdown.Menu>
                                                 </Dropdown>
-                                            </td>
+                                            </td> */}
                                         </tr>
                                     )
                                 })) : (

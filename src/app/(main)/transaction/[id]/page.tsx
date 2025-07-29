@@ -44,6 +44,7 @@ export default function TransactionsPage({ params }: { params: Promise<{ id: num
   const [searchTransactionId, setSearchTransactionId] = useState<string>();
   const [filterTransaction, setFilteredTransactions] = useState<any[]>([]);
   const [dateSearch, setDateSearch] = useState<number>();
+  const isSandbox = Number(process.env.NEXT_PUBLIC_SANDBOX);
 
   const dateSearchOptions = [{
     "label": "Past 30 days",
@@ -63,7 +64,12 @@ export default function TransactionsPage({ params }: { params: Promise<{ id: num
     setLoading(true);
     try {
       var accountDetail = await spHelper.getAccount(id);
-      api.setCredential(accountDetail.data?.client_id, accountDetail.data?.client_secret);
+      if (isSandbox == 0) {
+        api.setCredential(accountDetail.data?.client_id, accountDetail.data?.client_secret);
+      }
+      else {
+        api.setCredential(accountDetail.data?.sandbox_client_id, accountDetail.data?.sandbox_client_secret);
+      }
       var data = await transaction.getList(range[0].startDate.toString(), range[0].endDate.toString(), currentPage);
       const pagedItems = data.transactions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
       await includeTracking(pagedItems);

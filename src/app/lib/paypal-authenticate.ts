@@ -2,7 +2,8 @@
 import axios from 'axios';
 import qs from 'qs';
 
-const PAYPAL_API_BASE = 'https://api-m.paypal.com';
+const isSandbox = Number(process.env.NEXT_PUBLIC_SANDBOX);
+const PAYPAL_API_BASE = isSandbox == 1 ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
 
 export async function getPayPalAccessToken(client_id: string, client_secret: string): Promise<string> {
   const basicAuth = Buffer.from(`${client_id}:${client_secret}`).toString('base64');

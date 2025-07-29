@@ -4,6 +4,7 @@ import { SearchCriteria } from "@/app/models/searchCriteria";
 import api from "../api";
 import balance from "../paypal/balance";
 import dispute from "../paypal/dispute";
+const isSandbox = Number(process.env.NEXT_PUBLIC_SANDBOX);
 
 class SupabaseHelper {
     public async fetchPagedData(page: number = 1, limit: number = 10, search: SearchCriteria) {
@@ -26,7 +27,13 @@ class SupabaseHelper {
         for (const item of data ?? []) {
             if (item.client_id && item.client_secret) {
                 try {
-                    api.setCredential(item.client_id, item.client_secret)
+                    debugger;
+                    if (isSandbox == 0) {
+                        api.setCredential(item.client_id, item.client_secret);
+                    }
+                    else {
+                        api.setCredential(item.sandbox_client_id, item.sandbox_client_secret);
+                    }
                     var result = await balance.getBalance();
                     var disputeResult = await dispute.getListDisputes();
                     const [res1, res2] = await Promise.all([

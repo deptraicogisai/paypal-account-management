@@ -30,7 +30,126 @@ class Dispute {
 
     public async getDisputeDetail(id: string) {
         var result = await api.get(`${DISPUTES_DETAIL_URL}/${id}`);
+        console.log(result);
         return result;
+    }
+
+    public async acceptClaim(id: string, responseDispute: any) {
+        try {
+            const DISPUTES_ACCEPT_CLAIM_URL = DISPUTES_DETAIL_URL + `/${id}/accept-claim`;
+            var data = {
+                note: responseDispute.message,
+                invoice_id: responseDispute.invoice_number || undefined
+            };
+
+            var result = await api.post(DISPUTES_ACCEPT_CLAIM_URL, data);
+            return {
+                success: true,
+                result
+            }
+        } catch (err) {
+            return {
+                success: false,
+                message: err
+            }
+        }
+    }
+
+    public async offerPartialRefund(id: string, offer: any) {
+        try {
+            const DISPUTES_OFFER_PARTIAL_URL = DISPUTES_DETAIL_URL + `/${id}/make-offer`;
+            debugger;
+            var data = {
+                note: `${offer.message}`,
+                invoice_id: offer.invoice_number || undefined,
+                offer_amount: {
+                    currency_code: "USD",
+                    value: `${offer.amount}`
+                },
+                offer_type: "REFUND"
+            };
+
+            var result = await api.post(DISPUTES_OFFER_PARTIAL_URL, data);
+            return {
+                success: true,
+                result
+            }
+        } catch (err) {
+            return {
+                success: false,
+                message: err
+            }
+        }
+    }
+
+    public async offerReplacementWithRefund(id: string, offer: any) {
+        try {
+            const DISPUTES_OFFER_PARTIAL_URL = DISPUTES_DETAIL_URL + `/${id}/make-offer`;
+            var data = {
+                note: `${offer.message}`,
+                invoice_id: offer.invoice_number || undefined,
+                offer_amount: {
+                    currency_code: "USD",
+                    value: `${offer.amount}`
+                },
+                offer_type: "REFUND_WITH_REPLACEMENT"
+            };
+
+            var result = await api.post(DISPUTES_OFFER_PARTIAL_URL, data);
+            return {
+                success: true,
+                result
+            }
+        } catch (err) {
+            return {
+                success: false,
+                message: err
+            }
+        }
+    }
+
+    public async sendMessage(id: string, message: string) {
+        try {
+            const DISPUTES_SEND_MESSAGE_URL = DISPUTES_DETAIL_URL + `/${id}/send-message`;
+            var data = {
+                message
+            };
+
+            var result = await api.post(DISPUTES_SEND_MESSAGE_URL, data);
+            debugger;
+            return {
+                success: true,
+                result
+            }
+        } catch (err) {
+            return {
+                success: false,
+                message: err
+            }
+        }
+    }
+
+
+    public async offerReplacementWithoutRefund(id: string, message: string) {
+        try {
+            const DISPUTES_OFFER_REPLACEMENT_URL = DISPUTES_DETAIL_URL + `/${id}/make-offer`;
+            debugger;
+            var data = {
+                note: `${message}`,
+                offer_type: "REPLACEMENT_WITHOUT_REFUND"
+            };
+
+            var result = await api.post(DISPUTES_OFFER_REPLACEMENT_URL, data);
+            return {
+                success: true,
+                result
+            }
+        } catch (err) {
+            return {
+                success: false,
+                message: err
+            }
+        }
     }
 }
 

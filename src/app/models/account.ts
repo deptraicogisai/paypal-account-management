@@ -20,6 +20,8 @@ export interface PaypalAccount {
     vps_user: string,
     vps_password: string,
     client_id: string,
-    client_secret: string    
+    client_secret: string,
+    sandbox_client_id: string,
+    sandbox_client_secret: string,
     balances: Balance[]
 }

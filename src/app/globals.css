@@ -197,3 +197,69 @@ a {
   color: black;
   font-weight: bold;
 }
+
+.action-button-container {
+  width: 50px;
+}
+
+.action-button-container span {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.action-button {
+  border: 1px solid lightblue;
+  border-radius: 50%;
+  background: #f0f2f5;
+}
+
+.action-button:hover {
+  background: #c7c8c9;
+}
+
+.action-button-container:hover span {
+  font-weight: bold;
+}
+
+.batch-status-pending {
+  font-weight: bold;
+  color: #FFC107;
+}
+
+.batch-status-processing {
+  font-weight: bold;
+  color: #0DCAF0;
+}
+
+.batch-status-success {
+  font-weight: bold;
+  color: #198754;
+}
+
+.batch-status-denied {
+  font-weight: bold;
+  color: #DC3545;
+}
+
+.reponse-disute-button {
+  width: 100%;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.conversation .time {
+  color: #777e83;
+  font-size: 13px;
+  margin-left: 3px;
+}
+
+.conversation .chat {
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.offer-button {
+  border-radius: 20px;
+  font-size: 12px;
+  margin: 2px;
+}

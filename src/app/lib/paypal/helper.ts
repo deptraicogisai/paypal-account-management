@@ -1,3 +1,6 @@
+import moment from 'moment'
+const now = moment();
+
 class PaypalHelper {
     public convertToUTC(time: string, firstSecond: boolean) {
         const convertDate = new Date(time);
@@ -36,7 +39,12 @@ class PaypalHelper {
         const mi = pad(utcDate.getMinutes());
         const ss = pad(utcDate.getSeconds());
 
-        const formattedVN = `${dd}/${mm}/${yyyy} ${hh}:${mi}:${ss}`;
+        // Format with AM/PM
+        let hourNum = Number(hh);
+        const ampm = hourNum >= 12 ? 'PM' : 'AM';
+        let displayHour = hourNum % 12;
+        displayHour = displayHour === 0 ? 12 : displayHour;
+        const formattedVN = `${dd}/${mm}/${yyyy} ${String(displayHour).padStart(2, '0')}:${mi}:${ss} ${ampm}`;
         return formattedVN;
     }
 
@@ -45,7 +53,14 @@ class PaypalHelper {
         const [datePart, timePart] = input.split(' ');
         const [day, month, year] = datePart.split('/');
         return new Date(`${year}-${month}-${day}T${timePart}Z`);
-      }
+    }
+
+    public generatePayoutID() {
+        // Generates a random payout ID in the format "Payouts_YYYY_NNNNNNN"
+        const year = new Date().getFullYear();
+        const randomNumber = Date.now(); // Get ticks (milliseconds since epoch) for current date
+        return `Payouts_${year}_${randomNumber}`;
+    }
 
     public getDisputeReasonStatusDescription(code: string) {
         const disputeReasonStatusMap: Record<string, string> = {
@@ -78,14 +93,63 @@ class PaypalHelper {
         return disputeReasonStatusMap[code] || "Unknown reason";
     }
 
-    public getShippingAddress(address: any) {
+    public getShippingAddress(address: any, includeHtml: boolean) {
         if (address == undefined) return "";
-        let full_address = `<p style="margin:2px 0">${address.line1}</p>`;
-        if (address.line2) {
-            full_address += `<p style="margin:2px 0">${address.line2}</p>`;
+        // Use a flag variable to determine whether to include HTML tags (flag == 1) or not
+        let full_address = "";
+        if (includeHtml) {
+            full_address = `<p style="margin:2px 0">${address.line1}</p>`;
+            if (address.line2) {
+                full_address += `<p style="margin:2px 0">${address.line2}</p>`;
+            }
+            full_address += `<p style="margin:2px 0">${address.city},${address.state} ${address.postal_code} ${address.country_code}</p>`;
+        } else {
+            full_address = address.line1 ? address.line1 : "";
+            if (address.line2) {
+                full_address += `, ${address.line2}`;
+            }
+            full_address += `, ${address.city},${address.state} ${address.postal_code} ${address.country_code}`;
         }
-        full_address += `<p style="margin:2px 0">${address.city},${address.state} ${address.postal_code} ${address.country_code}</p>`;
         return full_address;
+    }
+
+    public getMakeOffer(offers: any[]) {
+        const makeOffers = {
+            allowPartialRefund: false,
+            allowRefundWithReturn: false,
+            allowReplacementWithoutRefund: false,
+            allowRefundWithReplacement: false
+        }
+
+        if (offers && offers.length > 0) {
+            if (offers.includes("PARTIAL_REFUND")) {
+                makeOffers.allowPartialRefund = true
+            }
+
+            if (offers.includes("REFUND_WITH_RETURN")) {
+                makeOffers.allowRefundWithReturn = true
+            }
+
+            if (offers.includes("REPLACEMENT_WITHOUT_REFUND")) {
+                makeOffers.allowReplacementWithoutRefund = true
+            }
+
+            if (offers.includes("REFUND_WITH_REPLACEMENT")) {
+                makeOffers.allowRefundWithReplacement = true
+            }
+        }
+
+        return makeOffers;
+    }
+
+    public hightlightDueDate(dudeDate: string) {
+        const dueDaySetting = Number(process.env.NEXT_PUBLIC_DISPUTE_DUE_DAYS);
+        if (!dudeDate) return 0;
+        const dueDate = moment(dudeDate, 'DD/MM/YYYY');
+        const now = moment().format('DD/MM/YYYY'); // Format current date
+        const nowMoment = moment(now, 'DD/MM/YYYY', true); // P
+        const diffDays = dueDate.diff(nowMoment, 'days');
+        return diffDays <= dueDaySetting;
     }
 }
 

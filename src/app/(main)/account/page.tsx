@@ -13,6 +13,10 @@ import DisputeModal from "../../modals/dispute-modal";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import SendPaymentModal from "@/app/modals/send-payment-modal";
+import api from "@/app/lib/api";
+const isSandbox = Number(process.env.NEXT_PUBLIC_SANDBOX);
+
 export default function Account() {
     const [show, setShow] = useState(false);
     const [data, setData] = useState<PaypalResult>();
@@ -27,10 +31,22 @@ export default function Account() {
     });
 
     const [showDisputeModal, setShowDisputeModal] = useState(false);
+    const [sendPaymentShow, setSendPaymentShow] = useState<boolean>(false);
 
     useEffect(() => {
         fetchData();
     }, [currentPage]);
+
+    const setCredential = async (id: number) => {    
+        var accountDetail = await spHelper.getAccount(id);
+
+        if (isSandbox == 0) {
+            api.setCredential(accountDetail.data?.client_id, accountDetail.data?.client_secret);
+        }
+        else {
+            api.setCredential(accountDetail.data?.sandbox_client_id, accountDetail.data?.sandbox_client_secret);
+        }
+    }
 
     const fetchData = async () => {
         setLoading(true);
@@ -97,6 +113,7 @@ export default function Account() {
 
     const onHideModal = () => {
         setShowDisputeModal(false);
+        setSendPaymentShow(false);
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -193,7 +210,7 @@ export default function Account() {
             </div>
             {
                 loading ? (<div className="d-flex justify-content-center align-items-center" style={{ minHeight: 200 }}>
-                    <Spinner animation="border" />
+                    <Spinner animation="grow" variant="primary" />
                 </div>) : (<>
                     <div className="d-flex justify-content-end">
                         <Button className="my-3" onClick={addAccount}>Add Account</Button>
@@ -282,16 +299,80 @@ export default function Account() {
                                                 }
                                             </td>
                                             <td className="text-center">
-                                                <Button className="mx-3" variant="outline-primary" onClick={() => viewAccount(item)}>View</Button>
-                                                <Button variant="outline-danger" onClick={() => confirmRemove(item)}>Remove</Button>
-                                                <div className="mt-2">
-                                                    <Button
-                                                        variant="outline-success"
-                                                        onClick={() => window.open(`/transaction/${item.id}`, '_blank')}
-                                                    >
-                                                        View List Transactions
-                                                    </Button>
-                                                </div>
+                                                <Row>
+                                                    <Col xs={2} md={2} lg={5}>
+                                                        <div className="action-button-container d-flex flex-column align-items-center">
+                                                            <a
+                                                                href="#"
+                                                                onClick={e => {
+                                                                    e.preventDefault();
+                                                                    viewAccount(item)
+                                                                }}
+                                                                className="w-100 d-flex flex-column align-items-center"
+                                                            >
+                                                                <div className="action-button d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', overflow: 'hidden' }}>
+                                                                    <Image src="/image/view.png" rounded style={{ width: '25px', height: '25px', objectFit: 'contain' }} />
+                                                                </div>
+                                                                <div className="w-100 d-flex justify-content-center">
+                                                                    <span className="text-center">View</span>
+                                                                </div>
+                                                            </a>
+                                                        </div>
+                                                    </Col>
+                                                    <Col xs={2} md={2} lg={5}>
+                                                        <div className="action-button-container d-flex flex-column align-items-center">
+                                                            <a
+                                                                href="#"
+                                                                onClick={e => {
+                                                                    e.preventDefault();
+                                                                    confirmRemove(item);
+                                                                }}
+                                                                className="w-100 d-flex flex-column align-items-center"
+                                                            >
+                                                                <div className="action-button d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', overflow: 'hidden' }}>
+                                                                    <Image src="/image/remove.png" rounded style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+                                                                </div>
+                                                                <div className="w-100 d-flex justify-content-center">
+                                                                    <span className="text-center">Remove</span>
+                                                                </div>
+                                                            </a>
+                                                        </div>
+                                                    </Col>
+                                                </Row>
+                                                <Row>
+                                                    <Col xs={2} md={2} lg={5}>
+                                                        <div className="action-button-container d-flex flex-column align-items-center">
+                                                            <a
+                                                                href="#"
+                                                                onClick={e => {
+                                                                    e.preventDefault();
+                                                                    window.open(`/transaction/${item.id}`, '_blank');
+                                                                }}
+                                                                className="w-100 d-flex flex-column align-items-center"
+                                                            >
+                                                                <div className="action-button d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', overflow: 'hidden' }}>
+                                                                    <Image src="/image/transaction.png" rounded style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+                                                                </div>
+                                                                <div className="w-100 d-flex justify-content-center">
+                                                                    <span className="text-center">Transactions</span>
+                                                                </div>
+                                                            </a>
+                                                        </div>
+                                                    </Col>
+                                                    <Col xs={2} md={2} lg={5}>
+                                                        <div className="action-button-container d-flex flex-column align-items-center">
+                                                            <a href="#" className="w-100 d-flex flex-column align-items-center" onClick={async (e) => {
+                                                                e.preventDefault();
+                                                                setSendPaymentShow(true);
+                                                            }}>
+                                                                <div className="action-button d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', overflow: 'hidden' }}>
+                                                                    <Image src="/image/send-payment.png" rounded style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+                                                                </div>
+                                                                <span className="w-100 d-flex justify-content-center">Send Payments</span>
+                                                            </a>
+                                                        </div>
+                                                    </Col>
+                                                </Row>
                                             </td>
                                         </tr>
                                     )
@@ -318,6 +399,10 @@ export default function Account() {
             <ComfirmModal show={showConfirm} onRemove={removeAccount} onHide={() => setShowConfirm(false)} ></ComfirmModal>
             {
                 showDisputeModal ? (<DisputeModal show={showDisputeModal} disputes={account?.disputes} onHide={onHideModal}></DisputeModal>) : <></>
+
+            }
+            {
+                sendPaymentShow ? <SendPaymentModal show={sendPaymentShow} onHide={onHideModal}></SendPaymentModal> : (<></>)
             }
         </Container>
     );
