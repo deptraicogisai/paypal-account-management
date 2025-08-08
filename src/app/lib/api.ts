@@ -68,3 +68,4 @@ const isSandbox = Number(process.env.NEXT_PUBLIC_SANDBOX);
 const url = isSandbox == 1 ? "https://api-m.sandbox.paypal.com/v1" : "https://api-m.paypal.com/v1";
 const api = new Api(url);
 export default api;
+export {Api}

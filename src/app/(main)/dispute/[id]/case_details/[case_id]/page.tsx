@@ -95,17 +95,15 @@ const CaseDetails = ({ params }: { params: Promise<{ id: number, case_id: string
                         We recommend you to work with customer to resolve this issue amicably by <strong>{ppHelper.convertToVNTime(disputeDetail?.seller_response_due_date ? disputeDetail?.seller_response_due_date : disputeDetail?.buyer_response_due_date)}</strong>.
                         A delay in your response could make the buyer escalate the issue to PayPal.
                     </Card.Text>
-                    <Button variant="outline-secondary" className="offer-button" onClick={() => setShowSendRefundModal(true)}><b>Send Refund</b></Button>
                     {
-                        ppHelper.getMakeOffer(disputeDetail?.allowed_response_options.accept_claim?.accept_claim_types).allowPartialRefund ?
+                        ppHelper.getMakeOffer(disputeDetail?.allowed_response_options?.accept_claim?.accept_claim_types).allowRefund ?
                             <>
-                                <Button variant="outline-secondary" className="offer-button" onClick={() => setShowSendReplacementWithoutRefundModal(true)}>
-                                <b>Partial refund</b> <Badge bg="primary" pill>Offer</Badge>
-                                </Button>
+                                <Button variant="outline-secondary" className="offer-button" onClick={() => setShowSendRefundModal(true)}><b>Send Refund</b></Button>
+
                             </> : <></>
                     }
                     {
-                        ppHelper.getMakeOffer(disputeDetail?.allowed_response_options.make_offer?.offer_types).allowReplacementWithoutRefund ?
+                        ppHelper.getMakeOffer(disputeDetail?.allowed_response_options?.make_offer?.offer_types).allowReplacementWithoutRefund ?
                             <>
                                 <Button variant="outline-secondary" className="offer-button" onClick={() => setShowSendReplacementWithoutRefundModal(true)}>
                                     <b>Send a replacement</b> <Badge bg="primary" pill>Offer</Badge>
@@ -113,7 +111,7 @@ const CaseDetails = ({ params }: { params: Promise<{ id: number, case_id: string
                             </> : <></>
                     }
                     {
-                        ppHelper.getMakeOffer(disputeDetail?.allowed_response_options.make_offer?.offer_types).allowRefundWithReplacement ?
+                        ppHelper.getMakeOffer(disputeDetail?.allowed_response_options?.make_offer?.offer_types).allowRefundWithReplacement ?
                             <>
                                 <Button variant="outline-secondary" className="offer-button" onClick={() => setshowSendReplacementRefundModal(true)}>
                                     <b>Send a replacement with refund</b> <Badge bg="primary" pill>Offer</Badge>
@@ -122,7 +120,7 @@ const CaseDetails = ({ params }: { params: Promise<{ id: number, case_id: string
                     }
 
                     {
-                        ppHelper.getMakeOffer(disputeDetail?.allowed_response_options.make_offer?.offer_types).allowRefundWithReturn ?
+                        ppHelper.getMakeOffer(disputeDetail?.allowed_response_options?.make_offer?.offer_types).allowRefundWithReturn ?
                             <>
                                 <Button variant="outline-secondary" className="offer-button">
                                     <b>Refund with return item</b> <Badge bg="primary" pill>Offer</Badge>
@@ -229,7 +227,7 @@ const CaseDetails = ({ params }: { params: Promise<{ id: number, case_id: string
                                                                         posted_by={t.posted_by}
                                                                         time_posted={t.time_posted}
                                                                         content={t.content}
-                                                                        documents={t.documents} buyer_name={transactionDetail?.payer_info.payer_name.alternate_full_name}                                                                    />
+                                                                        documents={t.documents} buyer_name={transactionDetail?.payer_info.payer_name.alternate_full_name} />
                                                                 </div>
                                                             ))}
                                                         </div>

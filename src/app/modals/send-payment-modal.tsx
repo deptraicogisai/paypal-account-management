@@ -3,6 +3,8 @@ import { Button, Col, Modal, Row, Spinner } from "react-bootstrap";
 import payout from "../lib/paypal/payout";
 import { Payout } from "../models/payout";
 import ppHelper from "../lib/paypal/helper";
+import { LoadingOutlined, SmileOutlined, SolutionOutlined, UserOutlined } from "@ant-design/icons";
+import { Steps } from "antd";
 
 interface IProps {
     show: boolean
@@ -22,13 +24,15 @@ const SendPaymentModal = (props: IProps) => {
         amount: "",
         paymentType: "",
         note: "",
-        currency: ""
+        currency: "USD"
     });
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
     const [validateMsg, setValidateMsg] = useState<string | null>(null);
     const [payoutBatchId, setPayoutBatchId] = useState<string>("");
     const [payoutBatchStatus, setPayoutBatchStatus] = useState<string>();
     const [checking, setChecking] = useState<boolean>(false);
+    const [currentStep, setCurrentStep] = useState<number>(0);
+    const [statusSteps, setStatusSteps] = useState<string[]>(["wait", "wait", "wait"]);
 
     const validateFields = () => {
         const errors: FieldErrors = {};
@@ -79,29 +83,63 @@ const SendPaymentModal = (props: IProps) => {
         if (Object.keys(errors).length === 0) {
             setValidateMsg(null);
             try {
+                setChecking(true);
                 var result = await payout.sendPayment(formData);
                 if (result.success) {
-                    setPayoutBatchId(result.data.batch_header.payout_batch_id);
-                    setPayoutBatchStatus(result.data?.batch_header.batch_status);
+                    const data = result.data as any;
+                    const batchId = data.batch_header.payout_batch_id;
+                    setPayoutBatchId(batchId);
+                    setPayoutBatchStatus(data?.batch_header.batch_status);
+                    checkPayoutStatus(batchId);
                 } else {
                     alert(`${result.message}`);
                 }
             } catch (error) {
                 setValidateMsg("Failed to send payment. Please try again.");
+                setChecking(false);
             }
         } else {
             setValidateMsg("Please fix the errors below.");
         }
     };
 
-    const checkPayoutStatus = async () => {
-        setChecking(true);
-        var result = await payout.checkPayoutBatchStatus(payoutBatchId);
-        if (result.success) {
-            setPayoutBatchStatus(result.data?.batch_header.batch_status);
-        } else {
-            alert(`${result.message}`);
+    const checkPayoutStatus = async (batchId?: string) => {
+        const batchIdToUse = batchId || payoutBatchId;
+        if (!batchIdToUse) {
+            alert("No payout batch ID available");
+            return;
         }
+        let status = null;
+        let result = null;
+        do {
+            result = await payout.checkPayoutBatchStatus(batchIdToUse);
+            if (result.success) {
+                status = result.data?.batch_header?.batch_status;
+                setPayoutBatchStatus(status);
+                switch (status) {
+                    case "PENDING":
+                        setStatusSteps(["finish", "wait", "wait"]);
+                        break;
+                    case "PROCESSING":
+                        setStatusSteps(["finish", "finish", "wait"]);
+                        break;
+                    case "SUCCESS":
+                        setStatusSteps(["finish", "finish", "finish"]);
+                        break;
+                    default:
+                        break;
+                }
+                if (status === "SUCCESS") {
+                    break;
+                }
+                // Wait for a short interval before checking again
+                await new Promise(resolve => setTimeout(resolve, 200));
+            } else {
+                alert(`${result.message}`);
+                break;
+            }
+        } while (status !== "SUCCESS");
+
         setChecking(false);
     }
 
@@ -150,7 +188,7 @@ const SendPaymentModal = (props: IProps) => {
                             </Col>
                             <Col xs={4}>
                                 <label htmlFor="currency" className="form-label">Currency</label>
-                                <select 
+                                <select
                                     className="form-select"
                                     id="currency"
                                     name="currency"
@@ -218,38 +256,46 @@ const SendPaymentModal = (props: IProps) => {
                             <div className="invalid-feedback d-block">{fieldErrors.note}</div>
                         )}
                     </div>
-                    {
-                        payoutBatchId && (
-                            <div>
-                                Status: <span className={`batch-status-${payoutBatchStatus?.toLowerCase()}`}>{payoutBatchStatus}</span>
-                                <Button variant="outline-success" onClick={checkPayoutStatus} disabled={checking} className="mx-3">
-                                    {checking ? (
-                                        <>
-                                            <Spinner
-                                                as="span"
-                                                animation="grow"
-                                                size="sm"
-                                                role="status"
-                                                aria-hidden="true"
-                                            />
-                                            <span>Checking...</span>
-                                        </>
-                                    ) : 'Check'}
-                                </Button>
-                            </div>
-                        )
-                    }
+                    <Steps size="small"
+                        labelPlacement="vertical"
+                        current={1}
+                        items={[
+                            {
+                                title: 'Pending',
+                                status: statusSteps[0],
+                                description: 'Your payout requests were received and will be processed soon'
+                            },
+                            {
+                                title: 'Processing',
+                                status: statusSteps[1],
+                                description: 'Your payout requests were received and are now being processed'
+                            },
+                            {
+                                title: 'Success',
+                                status: statusSteps[2],
+                                description: 'Your payout batch was processed and completed'
+                            }
+                        ]}
+                    />
                 </form>
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={props.onHide}>
                     Close
                 </Button>
-                <Button
-                    variant="primary"
-                    onClick={handleSend}
-                >
-                    Send
+                <Button variant="outline-success" onClick={() => handleSend()} disabled={checking} className="mx-3">
+                    {checking ? (
+                        <>
+                            <Spinner
+                                as="span"
+                                animation="grow"
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                            />
+                            <span>Sending...</span>
+                        </>
+                    ) : 'Send'}
                 </Button>
             </Modal.Footer>
         </Modal>

@@ -15,7 +15,7 @@ interface IProps {
     account?: PaypalAccount
     show: boolean;
     onHide: () => void;
-    onSuccess: (account: PaypalAccount) => void;
+    onSuccess: (account: PaypalAccount, isEdit: boolean) => void;
 }
 
 
@@ -83,9 +83,10 @@ const PaypalAccountModal = (props: IProps) => {
         // For now, just log the formData
         console.log("Saving account:", formData);
         var result = await spHelper.upsertAccount(formData as PaypalAccount);
+        debugger;
         if (result.success) {
             props.onHide();
-            props.onSuccess(formData);
+            props.onSuccess(result.data, formData.id != 0);
         }
     };
     return (

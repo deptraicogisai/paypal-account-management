@@ -1,6 +1,4 @@
 import NextAuth from "next-auth"
-import Credentials from "next-auth/providers/credentials"
-import Google from "next-auth/providers/google"
 import spHelper from "./app/lib/supabase/supabaseHelper"
 import GoogleProvider from "next-auth/providers/google";
 
@@ -14,8 +12,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
     error: "/error"
   },
-  secret: process.env.AUTH_SECRET,
-  debug: true,
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async signIn({ user, account, profile }) {
       var userInfo = await spHelper.getUser(user);

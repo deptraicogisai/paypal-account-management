@@ -5,7 +5,7 @@ const DISPUTES_URL = `/customer/disputes?page_size=${PAGE_SIZE}`;
 const DISPUTES_DETAIL_URL = '/customer/disputes';
 
 class Dispute {
-    public async getListDisputes(url?: string) {
+    public async getListDisputes(api: any, url?: string) {
         var disputeData = { items: [] };
         var result = await api.get(url ?? DISPUTES_URL);
         // Concatenate the items from result into disputeData.items

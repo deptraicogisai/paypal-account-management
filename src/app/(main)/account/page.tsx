@@ -1,7 +1,7 @@
 "use client";
 import { Button, Col, Container, Form, InputGroup, Row, Spinner, Table, Image, Dropdown } from "react-bootstrap";
 import PaypalAccountModal from "../../modals/paypal-account-modal";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PaypalAccount, PaypalResult } from "../../models/account";
 import spHelper from "../../lib/supabase/supabaseHelper";
 import Paging from "../../components/paging";
@@ -10,15 +10,16 @@ import { MdOutlineEmail } from "react-icons/md";
 import { AiOutlineGlobal } from "react-icons/ai";
 import { CiBank } from "react-icons/ci";
 import DisputeModal from "../../modals/dispute-modal";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import SendPaymentModal from "@/app/modals/send-payment-modal";
 import api from "@/app/lib/api";
+import { Popconfirm, Result, Spin } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
+
 const isSandbox = Number(process.env.NEXT_PUBLIC_SANDBOX);
 
 export default function Account() {
     const [show, setShow] = useState(false);
+    const [allAccounts, setAllAccounts] = useState<PaypalAccount[]>([]);
     const [data, setData] = useState<PaypalResult>();
     const [account, setAccount] = useState<PaypalAccount>();
     const [currentPage, setCurrentPage] = useState(1);
@@ -29,15 +30,78 @@ export default function Account() {
         domain: "",
         bank: ""
     });
-
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [sendPaymentShow, setSendPaymentShow] = useState<boolean>(false);
+    const [loadingAccounts, setLoadingAccounts] = useState<Set<number>>(new Set());
+    const skipNextFetch = useRef(false);
+    const pageSize = Number(process.env.NEXT_PUBLIC_PAGE_SIZE || 5);
+
+    // Filter and paginate accounts
+    const filterAccounts = (accounts: PaypalAccount[], criteria: typeof searchCriteria): PaypalAccount[] => {
+        return accounts.filter((acc: PaypalAccount) =>
+            (!criteria.email || acc.email?.toLowerCase().includes(criteria.email.toLowerCase())) &&
+            (!criteria.domain || acc.domain?.toLowerCase().includes(criteria.domain.toLowerCase())) &&
+            (!criteria.bank || acc.bank?.toLowerCase().includes(criteria.bank.toLowerCase()))
+        );
+    };
+    const paginateAccounts = (accounts: PaypalAccount[], page: number, pageSize: number): PaypalAccount[] => {
+        const start = (page - 1) * pageSize;
+        return accounts.slice(start, start + pageSize);
+    };
+    const updatePagedData = (
+        accounts: PaypalAccount[] = allAccounts,
+        criteria: typeof searchCriteria = searchCriteria,
+        page: number = currentPage
+    ) => {
+        const filtered = filterAccounts(accounts, criteria);
+        setData({
+            items: paginateAccounts(filtered, page, pageSize),
+            total_items: filtered.length,
+        });
+    };
 
     useEffect(() => {
-        fetchData();
-    }, [currentPage]);
+        // Fetch all accounts once
+        const fetchAll = async () => {
+            setLoading(true);
+            try {
+                const all = await spHelper.fetchAllAccounts();
+                setAllAccounts(all.items);
+                updatePagedData(all.items, searchCriteria, 1);
+                // Fetch details in background
+                all.items.forEach(item => {
+                    setLoadingAccounts(prev => new Set(prev).add(item.id));
+                    spHelper.fetchTransactionAndBalance(item).then(accountWithDetails => {
+                        setAllAccounts(prev =>
+                            prev.map(i => i.id === accountWithDetails.id ? accountWithDetails : i)
+                        );
+                        setLoadingAccounts(prev => {
+                            const newSet = new Set(prev);
+                            newSet.delete(item.id);
+                            return newSet;
+                        });
+                    }).catch(() => {
+                        setLoadingAccounts(prev => {
+                            const newSet = new Set(prev);
+                            newSet.delete(item.id);
+                            return newSet;
+                        });
+                    });
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAll();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    const setCredential = async (id: number) => {    
+    useEffect(() => {
+        updatePagedData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [allAccounts, searchCriteria, currentPage]);
+
+    const setCredential = async (id: number) => {
         var accountDetail = await spHelper.getAccount(id);
 
         if (isSandbox == 0) {
@@ -48,32 +112,19 @@ export default function Account() {
         }
     }
 
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const page_size = Number(process.env.NEXT_PUBLIC_PAGE_SIZE || 5);
-            const data = await spHelper.fetchPagedData(currentPage, page_size, searchCriteria);
-            console.log(data);
-            setData(data);
-        } catch (error) {
-            setData(undefined);
-        } finally {
-            setLoading(false);
-        }
-    }
-
     const confirmRemove = (account: PaypalAccount) => {
         setAccount(account);
         setShowConfirm(true);
     }
 
-    const removeAccount = async () => {
+    const removeAccount = async (account: any) => {
         if (!account) return;
         const removeResult = await spHelper.removeAccount(account.id);
         if (removeResult.success) {
+            // Remove the account from allAccounts and update paged data
+            setAllAccounts(prev => prev.filter((item: PaypalAccount) => item.id !== account.id));
             setShowConfirm(false);
             setCurrentPage(1);
-            fetchData();
         }
     }
 
@@ -97,19 +148,59 @@ export default function Account() {
         // Just update the page here.
     }
 
-    const handleAccountAdded = (account: any) => {
-        setAccount(account)
-        fetchData();
+    const handleAccountAdded = async (account: any, isEdit: boolean) => {
+        setAccount(account);
+
+        // Add account to the list immediately
+        if (isEdit) {
+            const idx = allAccounts.findIndex((item: any) => item.id === account.id);
+            if (idx !== undefined && idx !== -1) {
+                allAccounts[idx] = account;
+            }
+        } else {
+            if (allAccounts) {
+                allAccounts.unshift(account);
+                setCurrentPage(1);
+            }
+        }
+        // Set data to display (update paged data)
+        updatePagedData(allAccounts, searchCriteria, 1);
+
+        skipNextFetch.current = true; // just set page, do not call fetchData here
+
+        // Load transaction and balance data in background
+        setLoadingAccounts(prev => new Set(prev).add(account.id));
+
+        try {
+            await spHelper.fetchTransactionAndBalance(account);
+
+            const idx = allAccounts.findIndex((item: any) => item.id === account.id);
+            if (idx !== undefined && idx !== -1) {
+                allAccounts[idx] = account;
+            }
+            // Update paged data again after loading transaction and balance
+            updatePagedData(allAccounts, searchCriteria, 1);
+        } catch (error) {
+            console.error('Error loading transaction and balance data:', error);
+        } finally {
+            setLoadingAccounts(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(account.id);
+                return newSet;
+            });
+        }
     }
 
-    const handleSearch = () => {
+    const handleSearch = (e?: any) => {
+        if (e) e.preventDefault();
         setCurrentPage(1);
-        fetchData();
-    }
-
+        updatePagedData(allAccounts, searchCriteria, 1);
+    };
     const handleReset = () => {
-
-    }
+        setsearchCriteria({ bank: "", domain: "", email: "" });
+        setCurrentPage(1);
+        updatePagedData(allAccounts, { bank: "", domain: "", email: "" }, 1);
+    };
 
     const onHideModal = () => {
         setShowDisputeModal(false);
@@ -124,9 +215,20 @@ export default function Account() {
         }));
     };
 
-    const showDisputeOverview = (item) => {
+    const showDisputeOverview = (item: any) => {
         setAccount(item);
         setShowDisputeModal(true);
+    }
+
+    const sendPayment = async (item: any) => {
+        var accountDetail = await spHelper.getAccount(item.id);
+        if (isSandbox == 0) {
+            api.setCredential(accountDetail.data?.client_id, accountDetail.data?.client_secret);
+        }
+        else {
+            api.setCredential(accountDetail.data?.sandbox_client_id, accountDetail.data?.sandbox_client_secret);
+        }
+        setSendPaymentShow(true);
     }
 
     // Inline style for the search form border highlight
@@ -210,7 +312,8 @@ export default function Account() {
             </div>
             {
                 loading ? (<div className="d-flex justify-content-center align-items-center" style={{ minHeight: 200 }}>
-                    <Spinner animation="grow" variant="primary" />
+                    {/* <Spinner animation="grow" variant="primary" /> */}
+                    <Spin fullscreen={true} tip="Loading..."></Spin>
                 </div>) : (<>
                     <div className="d-flex justify-content-end">
                         <Button className="my-3" onClick={addAccount}>Add Account</Button>
@@ -218,12 +321,12 @@ export default function Account() {
                     <Table striped bordered hover>
                         <thead>
                             <tr>
-                                <th>Email</th>
-                                <th>Domain</th>
-                                <th>Note</th>
-                                <th>Balance</th>
-                                <th>Dispute</th>
-                                <th className="text-center">Action</th>
+                                <th style={{ width: "18%" }}>Email</th>
+                                <th style={{ width: "14%" }}>Domain</th>
+                                <th style={{ width: "18%" }}>Note</th>
+                                <th style={{ width: "20%" }}>Balance</th>
+                                <th style={{ width: "12%" }}>Dispute</th>
+                                <th className="text-center" style={{ width: "12%" }}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -235,7 +338,12 @@ export default function Account() {
                                             <td>{item.domain}</td>
                                             <td>{item.note}</td>
                                             <td>
-                                                {
+                                                {loadingAccounts.has(item.id) ? (
+                                                    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 100 }}>
+                                                        <Spinner animation="border" size="sm" variant="primary" />
+                                                        <span className="ms-2" style={{ fontSize: 13 }}>Loading balance...</span>
+                                                    </div>
+                                                ) : (
                                                     item.balances?.map((t, idx) => {
                                                         return (
                                                             <div className="mb-3" key={idx}>
@@ -282,20 +390,26 @@ export default function Account() {
                                                             </div>
                                                         )
                                                     })
-                                                }
+                                                )}
                                             </td>
                                             <td className="text-center">
                                                 {
-                                                    (item.disputes != undefined) ? (
-                                                        <Dropdown>
-                                                            <Dropdown.Toggle variant="outline-primary" id="dropdown-basic" size="sm" style={{ width: '100%' }}>
-                                                                {item.disputes?.filter((d: any) => d.dispute_state === 'REQUIRED_ACTION').length ?? 0}
-                                                            </Dropdown.Toggle>
-                                                            <Dropdown.Menu>
-                                                                <Dropdown.Item onClick={() => showDisputeOverview(item)}>Overview</Dropdown.Item>
-                                                                <Dropdown.Item href={`/dispute/${item.id}`} target="_blank">View List</Dropdown.Item>
-                                                            </Dropdown.Menu>
-                                                        </Dropdown>) : (<></>)
+                                                    loadingAccounts.has(item.id) ? (
+                                                        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 100 }}>
+                                                            <Spinner animation="border" size="sm" variant="primary" />
+                                                            <span className="ms-2" style={{ fontSize: 13 }}>Loading disputes...</span>
+                                                        </div>
+                                                    ) :
+                                                        (item.disputes != undefined) ? (
+                                                            <Dropdown>
+                                                                <Dropdown.Toggle variant="outline-primary" id="dropdown-basic" size="sm" style={{ width: '100%' }}>
+                                                                    {item.disputes?.filter((d: any) => d.dispute_state === 'REQUIRED_ACTION').length ?? 0}
+                                                                </Dropdown.Toggle>
+                                                                <Dropdown.Menu>
+                                                                    <Dropdown.Item onClick={() => showDisputeOverview(item)}>Overview</Dropdown.Item>
+                                                                    <Dropdown.Item href={`/dispute/${item.id}`} target="_blank">View List</Dropdown.Item>
+                                                                </Dropdown.Menu>
+                                                            </Dropdown>) : (<></>)
                                                 }
                                             </td>
                                             <td className="text-center">
@@ -321,21 +435,30 @@ export default function Account() {
                                                     </Col>
                                                     <Col xs={2} md={2} lg={5}>
                                                         <div className="action-button-container d-flex flex-column align-items-center">
-                                                            <a
-                                                                href="#"
-                                                                onClick={e => {
-                                                                    e.preventDefault();
-                                                                    confirmRemove(item);
-                                                                }}
-                                                                className="w-100 d-flex flex-column align-items-center"
+                                                            <Popconfirm
+                                                                title="Delete confirmation"
+                                                                description="Are you sure to delete this account?"
+                                                                okText="Yes"
+                                                                onConfirm={() => removeAccount(item)}
+                                                                cancelText="No"
+                                                                showArrow = {false}
                                                             >
-                                                                <div className="action-button d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', overflow: 'hidden' }}>
-                                                                    <Image src="/image/remove.png" rounded style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
-                                                                </div>
-                                                                <div className="w-100 d-flex justify-content-center">
-                                                                    <span className="text-center">Remove</span>
-                                                                </div>
-                                                            </a>
+                                                                <a
+                                                                    href="#"
+                                                                    onClick={e => {
+                                                                        e.preventDefault();
+                                                                        // confirmRemove(item);
+                                                                    }}
+                                                                    className="w-100 d-flex flex-column align-items-center"
+                                                                >
+                                                                    <div className="action-button d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', overflow: 'hidden' }}>
+                                                                        <Image src="/image/remove.png" rounded style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+                                                                    </div>
+                                                                    <div className="w-100 d-flex justify-content-center">
+                                                                        <span className="text-center">Remove</span>
+                                                                    </div>
+                                                                </a>
+                                                            </Popconfirm>
                                                         </div>
                                                     </Col>
                                                 </Row>
@@ -361,10 +484,7 @@ export default function Account() {
                                                     </Col>
                                                     <Col xs={2} md={2} lg={5}>
                                                         <div className="action-button-container d-flex flex-column align-items-center">
-                                                            <a href="#" className="w-100 d-flex flex-column align-items-center" onClick={async (e) => {
-                                                                e.preventDefault();
-                                                                setSendPaymentShow(true);
-                                                            }}>
+                                                            <a href="#" className="w-100 d-flex flex-column align-items-center" onClick={() => sendPayment(item)}>
                                                                 <div className="action-button d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', overflow: 'hidden' }}>
                                                                     <Image src="/image/send-payment.png" rounded style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
                                                                 </div>
@@ -388,7 +508,7 @@ export default function Account() {
                     </Table>
                     {
                         (data?.total_items ?? 0) > 0 ? (
-                            <Paging currentPage={currentPage} totalPages={data?.total_pages ?? 0} onPageChange={handlePageChange}></Paging>
+                            <Paging currentPage={currentPage} totalPages={Math.ceil(data?.total_items / 5)} onPageChange={handlePageChange}></Paging>
                         ) : (
                             <></>
                         )

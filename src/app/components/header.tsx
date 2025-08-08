@@ -8,7 +8,7 @@ import SendPaymentModal from "../modals/send-payment-modal";
 
 const Header = () => {
     const { data: session, status } = useSession();
-
+    const isAuthenticated = status === "authenticated";
     return (
         <>
             <Navbar bg="dark" data-bs-theme="dark">

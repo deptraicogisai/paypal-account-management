@@ -24,4 +24,5 @@ export interface PaypalAccount {
     sandbox_client_id: string,
     sandbox_client_secret: string,
     balances: Balance[]
+    disputes?: any[]
 }

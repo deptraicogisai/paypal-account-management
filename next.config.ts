@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true, // 👈 Bỏ qua lỗi TypeScript khi build
   },
   devIndicators: false,
+  images: {
+    domains: ['lh3.googleusercontent.com'], // add the actual domain of the image
+  },
   async redirects() {
     return [
       {

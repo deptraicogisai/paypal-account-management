@@ -4,6 +4,7 @@ import api from "../api";
 const PAYOUT_URL = '/payments/payouts';
 class PayoutService {
     public async sendPayment(p: any) {
+        debugger;
         const payload = {
             sender_batch_header: {
                 sender_batch_id: `${ppHelper.generatePayoutID()}`,
@@ -18,7 +19,8 @@ class PayoutService {
                         currency: `${p.currency}`
                     },
                     note: `${p.note}`,
-                    receiver: `${p.sendTo}`
+                    receiver: `${p.sendTo}`,
+                    purpose: `${p.paymentType}`
                 }
             ]
         };

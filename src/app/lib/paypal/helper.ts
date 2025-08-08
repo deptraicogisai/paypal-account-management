@@ -115,6 +115,7 @@ class PaypalHelper {
 
     public getMakeOffer(offers: any[]) {
         const makeOffers = {
+            allowRefund: false,
             allowPartialRefund: false,
             allowRefundWithReturn: false,
             allowReplacementWithoutRefund: false,
@@ -122,6 +123,10 @@ class PaypalHelper {
         }
 
         if (offers && offers.length > 0) {
+            if (offers.includes("REFUND")) {
+                makeOffers.allowRefund = true
+            }
+
             if (offers.includes("PARTIAL_REFUND")) {
                 makeOffers.allowPartialRefund = true
             }
