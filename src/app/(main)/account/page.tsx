@@ -70,6 +70,7 @@ export default function Account() {
                 updatePagedData(all.items, searchCriteria, 1);
                 // Fetch details in background
                 all.items.forEach(item => {
+                    debugger;
                     setLoadingAccounts(prev => new Set(prev).add(item.id));
                     spHelper.fetchTransactionAndBalance(item).then(accountWithDetails => {
                         setAllAccounts(prev =>
@@ -80,7 +81,7 @@ export default function Account() {
                             newSet.delete(item.id);
                             return newSet;
                         });
-                    }).catch(() => {
+                    }).catch((err) => {
                         setLoadingAccounts(prev => {
                             const newSet = new Set(prev);
                             newSet.delete(item.id);
@@ -318,6 +319,7 @@ export default function Account() {
                     <div className="d-flex justify-content-end">
                         <Button className="my-3" onClick={addAccount}>Add Account</Button>
                     </div>
+                    <a href="#" style={{ cursor: 'pointer !important' }}>asdsd</a>
                     <Table striped bordered hover>
                         <thead>
                             <tr>
@@ -441,7 +443,7 @@ export default function Account() {
                                                                 okText="Yes"
                                                                 onConfirm={() => removeAccount(item)}
                                                                 cancelText="No"
-                                                                showArrow = {false}
+                                                                showArrow={false}
                                                             >
                                                                 <a
                                                                     href="#"

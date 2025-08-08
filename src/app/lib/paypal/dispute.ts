@@ -15,7 +15,7 @@ class Dispute {
             return disputeData;
         }
 
-        while (true) {
+        while (next_page_url) {
             next_page_url = next_page_url.replace('https://api-m.paypal.com/v1', '');
             var data = await api.get(next_page_url);
             disputeData.items = [...disputeData.items, ...data.items];
