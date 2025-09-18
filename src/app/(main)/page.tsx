@@ -1,7 +1,7 @@
 import Image from "next/image";
 import styles from "./page.module.css";
 import { Button, Container, Table } from "react-bootstrap";
-import PaypalAccountModal from "./modals/paypal-account-modal";
+import PaypalAccountModal from "../modals/paypal-account-modal";
 
 import { use, useEffect, useState } from "react";
 import Chart from "react-google-charts";

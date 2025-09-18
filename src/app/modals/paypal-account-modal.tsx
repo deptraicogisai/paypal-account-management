@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Modal, Button, Form, InputGroup, Row, Col } from "react-bootstrap";
+import { Modal, Form, InputGroup, Row, Col } from "react-bootstrap";
 import { PaypalAccount } from "../models/account";
 import { MdOutlineEmail } from "react-icons/md";
 import { RiLockPasswordFill } from "react-icons/ri";
@@ -10,6 +10,7 @@ import { HiMiniComputerDesktop } from "react-icons/hi2";
 import { FaEye, FaEyeSlash, FaUser } from "react-icons/fa";
 import { TbLockPassword } from "react-icons/tb";
 import spHelper from "../lib/supabase/supabaseHelper";
+import { Button } from 'antd';
 
 interface IProps {
     account?: PaypalAccount
@@ -283,11 +284,11 @@ const PaypalAccountModal = (props: IProps) => {
                         </Col>
                     </Row>
                     <div className="d-flex justify-content-end">
-                        <Button variant="outline-primary" className="mx-2" onClick={handleSave}>
-                            Save
-                        </Button>
-                        <Button variant="outline-secondary" onClick={props.onHide}>
+                        <Button color="default" variant="outlined" type="primary" onClick={props.onHide}>
                             Close
+                        </Button>
+                        <Button type="primary" className="mx-2" onClick={handleSave}>
+                            Save
                         </Button>
                     </div>
                 </Form>

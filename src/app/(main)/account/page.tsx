@@ -1,5 +1,5 @@
 "use client";
-import { Button, Col, Container, Form, InputGroup, Row, Spinner, Table, Image, Dropdown } from "react-bootstrap";
+import { Col, Container, Form, InputGroup, Row, Spinner, Table, Image , Dropdown } from "react-bootstrap";
 import PaypalAccountModal from "../../modals/paypal-account-modal";
 import { useEffect, useRef, useState } from "react";
 import { PaypalAccount, PaypalResult } from "../../models/account";
@@ -12,8 +12,9 @@ import { CiBank } from "react-icons/ci";
 import DisputeModal from "../../modals/dispute-modal";
 import SendPaymentModal from "@/app/modals/send-payment-modal";
 import api from "@/app/lib/api";
-import { Popconfirm, Result, Spin } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import { MenuProps, Popconfirm, Result, Space, Spin } from "antd";
+import { DownOutlined, LoadingOutlined, PlusCircleOutlined } from "@ant-design/icons";
+import { Button } from 'antd';
 
 const isSandbox = Number(process.env.NEXT_PUBLIC_SANDBOX);
 
@@ -301,10 +302,10 @@ export default function Account() {
                             </InputGroup>
                         </Col>
                         <Col md={2} sm={6} xs={12} className="mb-2 d-flex gap-2">
-                            <Button onClick={handleSearch} variant="primary">
+                            <Button onClick={handleSearch} type="primary">
                                 Search
                             </Button>
-                            <Button type="button" variant="secondary" onClick={handleReset}>
+                            <Button type="primary" onClick={handleReset}>
                                 Reset
                             </Button>
                         </Col>
@@ -313,13 +314,11 @@ export default function Account() {
             </div>
             {
                 loading ? (<div className="d-flex justify-content-center align-items-center" style={{ minHeight: 200 }}>
-                    {/* <Spinner animation="grow" variant="primary" /> */}
-                    <Spin fullscreen={true} tip="Loading..."></Spin>
+                    <Spin spinning fullscreen />
                 </div>) : (<>
                     <div className="d-flex justify-content-end">
-                        <Button className="my-3" onClick={addAccount}>Add Account</Button>
+                        <Button className="my-3" onClick={addAccount} icon={<PlusCircleOutlined />} type="primary">Add Account</Button>
                     </div>
-                    <a href="#" style={{ cursor: 'pointer !important' }}>asdsd</a>
                     <Table striped bordered hover>
                         <thead>
                             <tr>
@@ -402,7 +401,7 @@ export default function Account() {
                                                             <span className="ms-2" style={{ fontSize: 13 }}>Loading disputes...</span>
                                                         </div>
                                                     ) :
-                                                        (item.disputes != undefined) ? (
+                                                        (item.disputes != undefined) ? (                                                          
                                                             <Dropdown>
                                                                 <Dropdown.Toggle variant="outline-primary" id="dropdown-basic" size="sm" style={{ width: '100%' }}>
                                                                     {item.disputes?.filter((d: any) => d.dispute_state === 'REQUIRED_ACTION').length ?? 0}
@@ -411,7 +410,8 @@ export default function Account() {
                                                                     <Dropdown.Item onClick={() => showDisputeOverview(item)}>Overview</Dropdown.Item>
                                                                     <Dropdown.Item href={`/dispute/${item.id}`} target="_blank">View List</Dropdown.Item>
                                                                 </Dropdown.Menu>
-                                                            </Dropdown>) : (<></>)
+                                                            </Dropdown>
+                                                        ) : (<></>)
                                                 }
                                             </td>
                                             <td className="text-center">

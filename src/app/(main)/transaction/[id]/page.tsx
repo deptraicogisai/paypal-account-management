@@ -3,12 +3,12 @@ import { use, useEffect, useRef, useState } from "react";
 import { Container, Table, Spinner, Form, Row, Col, Button, Pagination, FormControl, InputGroup } from "react-bootstrap";
 import Paging from "@/app/components/paging";
 import { BsCalendarDate } from "react-icons/bs";
-import { DateRange } from 'react-date-range';
 import { differenceInCalendarDays, format } from 'date-fns';
 import api from "@/app/lib/api";
 import transaction from "@/app/lib/paypal/transaction";
 import spHelper from "@/app/lib/supabase/supabaseHelper";
 import tracking from "@/app/lib/paypal/tracking";
+import { Spin } from "antd";
 
 const TRANSACTION_STATUSES = [
   { value: "", label: "All Statuses" },
@@ -234,7 +234,7 @@ export default function TransactionsPage({ params }: { params: Promise<{ id: num
       </div>
       {loading ? (
         <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 200 }}>
-          <Spinner animation="border" />
+          <Spin spinning fullscreen />
         </div>
       ) : (
         <div>
